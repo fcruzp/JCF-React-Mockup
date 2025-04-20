@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import KPICard from './components/KPICard';
 import TasksChart from './components/TasksChart';
@@ -6,9 +6,37 @@ import ThemeToggle from './components/ThemeToggle';
 import ShiftManagement from './components/ShiftManagement';
 import { Bell, User } from 'lucide-react';
 import TaskManagement from './components/TaskManagement';
+import UserProfile from './components/user-profile/UserProfile'; // Import UserProfile
 
 function App() {
   const [activeView, setActiveView] = useState('Dashboard');
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [profileMenuRef]);
+
+
+  const handleProfileClick = () => {
+    setActiveView('User Profile');
+    setIsProfileMenuOpen(false); // Close menu after selection
+  };
+
+  const handleLogout = () => {
+    // Implement logout logic here
+    console.log('Logout clicked');
+    setIsProfileMenuOpen(false); // Close menu after selection
+  };
 
   const renderContent = () => {
     switch (activeView) {
@@ -16,6 +44,8 @@ function App() {
         return <ShiftManagement />;
       case 'Task Management':
         return <TaskManagement />;
+      case 'User Profile': // Pass setActiveView to UserProfile
+        return <UserProfile onNavigate={setActiveView} />;
       default:
         return (
           <main className="p-8">
@@ -90,8 +120,8 @@ function App() {
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       <Sidebar onViewChange={setActiveView} />
-      
-      <div className="flex-1">
+
+      <div className="flex-1 flex flex-col"> {/* Changed to flex-col */}
         {/* Header */}
         <header className="bg-white dark:bg-gray-800 shadow-sm">
           <div className="flex justify-between items-center px-8 py-4">
@@ -99,14 +129,37 @@ function App() {
               {activeView}
             </h1>
             <div className="flex items-center space-x-4">
+              {/* ... existing header content (ThemeToggle, Bell, Profile Dropdown) ... */}
               <ThemeToggle />
               <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
                 <Bell size={20} className="dark:text-gray-200" />
               </button>
-              <button className="flex items-center space-x-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
-                <User size={20} className="dark:text-gray-200" />
-              </button>
-              <div className="flex items-center space-x-2">
+              {/* Profile Dropdown */}
+              <div className="relative" ref={profileMenuRef}>
+                <button
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                  className="flex items-center space-x-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                >
+                  <User size={20} className="dark:text-gray-200" />
+                </button>
+                {isProfileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50">
+                    <button
+                      onClick={handleProfileClick}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Edit Profile
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Log out
+                    </button>
+                  </div>
+                )}
+              </div>
+               <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-indigo-700 rounded-full flex items-center justify-center text-white">
                     <span>MJ</span>
                   </div>
@@ -116,7 +169,13 @@ function App() {
           </div>
         </header>
 
-        {renderContent()}
+        {/* Separator Line */}
+        <div className="border-t border-gray-200 dark:border-gray-700"></div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-y-auto"> {/* Added for scrolling */}
+          {renderContent()}
+        </div>
       </div>
     </div>
   );
