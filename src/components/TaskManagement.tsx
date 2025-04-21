@@ -1,9 +1,9 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Eye, Edit2, Trash2, Plus, X } from 'lucide-react'; // Import Plus and X
+import { Eye, Edit2, Trash2, Plus, X } from 'lucide-react'; // Removed Filter
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import React, { useState } from "react"; // Import useState
-import { Button, Card, TextInput, Select, SelectItem, Textarea } from '@tremor/react'; // Import Tremor components
+import React, { useState, useMemo } from "react";
+import { Button, Card, TextInput, Select, SelectItem, Textarea } from '@tremor/react';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -61,9 +61,14 @@ const officers = [
   'Michael Chen',
 ];
 
+// Define filter type
+type TaskFilter = 'All' | 'Pending' | 'In Progress' | 'Completed';
+
 export function TaskManagement() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tasks, setTasks] = useState<Task[]>([ // Manage tasks with useState
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // Renamed for clarity
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false); // State for view modal
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null); // State for the task being viewed/edited
+  const [tasks, setTasks] = useState<Task[]>([
     {
       id: 1,
       title: "Patrol North Kingston Area",
@@ -93,6 +98,27 @@ export function TaskManagement() {
       status: "Pending",
       location: [18.0232, -76.8172],
       description: "Manage traffic at main intersection"
+    },
+    { // Add a completed task for testing filter
+      id: 4,
+      title: "File Incident Report",
+      priority: "Medium",
+      assignedTo: "Robert Brown",
+      dueDate: "2025-04-20",
+      status: "Completed",
+      location: [18.0190, -76.8050],
+      description: "Complete report for yesterday's incident"
+    },
+    // Add the new task record here
+    {
+      id: 5, // New unique ID
+      title: "Respond to Noise Complaint", // Example title
+      priority: "Low", // Example priority
+      assignedTo: "Unassigned", // Set assignedTo as requested
+      dueDate: "2025-04-23", // Example due date
+      status: "Pending", // Example status
+      location: [18.0205, -76.8150], // Example location near Kingston
+      description: "Check noise levels at residential address" // Example description
     }
   ]);
 
@@ -106,6 +132,8 @@ export function TaskManagement() {
     location: [18.0179, -76.8099], // Default location, consider making this user-settable or map-clickable
     status: 'Pending', // Default status for new tasks
   });
+
+  const [currentFilter, setCurrentFilter] = useState<TaskFilter>('All'); // State for the active filter
 
   // --- Input Handlers ---
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -169,7 +197,7 @@ export function TaskManagement() {
     };
 
     setTasks(prevTasks => [...prevTasks, taskToAdd]);
-    setIsModalOpen(false); // Close modal
+    setIsCreateModalOpen(false); // Close create modal
     // Reset form fields
     setNewTask({
       title: '',
@@ -182,17 +210,50 @@ export function TaskManagement() {
     });
   };
 
+  // --- Filtered Tasks ---
+  const filteredTasks = useMemo(() => {
+    if (currentFilter === 'All') {
+      return tasks;
+    }
+    return tasks.filter(task => task.status === currentFilter);
+  }, [tasks, currentFilter]); // Recalculate only when tasks or filter changes
+
+  // --- Action Handlers ---
+  const handleViewClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEditClick = (task: Task) => {
+    // TODO: Implement edit logic - likely involves setting selectedTask
+    // and opening a modal pre-filled with task data for editing.
+    console.log('Edit task:', task.id);
+    // Example:
+    // setSelectedTask(task);
+    // setIsEditModalOpen(true); // Need an edit modal state
+  };
+
+  const handleDeleteClick = (taskId: number | string) => {
+    // Add confirmation dialog here in a real app
+    console.log('Delete task:', taskId);
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+  };
+
+  const closeModal = () => {
+    setIsCreateModalOpen(false);
+    setIsViewModalOpen(false);
+    setSelectedTask(null); // Clear selected task when closing any modal
+  };
+
   return (
     <div className="p-6">
         {/* Header with Create Button */}
         <div className="flex justify-between items-center mb-6">
             {/* <h1 className="text-2xl font-semibold dark:text-white">Task Management</h1> */}
-            {/* Use Tremor Button to open modal */}
             <Button
               icon={Plus}
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => setIsCreateModalOpen(true)} // Open create modal
               className="bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg shadow-none"
-              // "
             >
               Create New Task
             </Button>
@@ -202,22 +263,29 @@ export function TaskManagement() {
       <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold mb-4 dark:text-white">Task Locations</h2>
         <MapContainer
-          center={[18.0179, -76.8099]} // Default center coordinates
-          zoom={13} // Default zoom level
-          style={{ height: "400px", width: "100%" }} // Map dimensions
+          center={[18.0179, -76.8099]}
+          zoom={13}
+          style={{ height: "400px", width: "100%" }}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
+          {/* Map markers should probably show ALL tasks regardless of filter, or adjust based on requirements */}
           {tasks.map((task) => (
             <Marker key={task.id} position={task.location as [number, number]}>
                   <Popup>
                     <div className="p-2">
                       <h3 className="font-semibold">{task.title}</h3>
                       <p className="text-sm text-gray-600">{task.description}</p>
-                      <p className="text-sm mt-2">
+                      <p className="text-sm mt-1">
                         <span className="font-semibold">Assigned to:</span> {task.assignedTo}
+                      </p>
+                       <p className="text-sm">
+                        <span className="font-semibold">Due:</span> {task.dueDate}
+                      </p>
+                       <p className="text-sm">
+                        <span className="font-semibold">Status:</span> {task.status}
                       </p>
                     </div>
                   </Popup>
@@ -230,69 +298,96 @@ export function TaskManagement() {
         {/* Task List */}
         <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow">
               <div className="p-6">
-                <h2 className="text-lg font-semibold mb-4 dark:text-white">Active Tasks</h2>
-            <div className="overflow-x-auto"> {/* Added for smaller screens */}
-              <table className="w-full min-w-[650px]"> {/* Added min-width */}
+                <div className="flex justify-between items-center mb-4"> {/* Container for title and filters */}
+                  <h2 className="text-lg font-semibold dark:text-white">Active Tasks</h2>
+                  {/* Filter Buttons */}
+                  <div className="flex space-x-2">
+                    {(['All', 'Pending', 'In Progress', 'Completed'] as TaskFilter[]).map((filter) => (
+                      <Button
+                        key={filter}
+                        variant={currentFilter === filter ? 'primary' : 'secondary'} // Highlight active filter
+                        onClick={() => setCurrentFilter(filter)}
+                        className={`px-3 py-1 text-sm rounded-md ${
+                          currentFilter === filter
+                            ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        {filter === 'All' ? 'All Tasks' : filter}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[650px]">
                 <thead>
                   <tr className="text-left text-gray-500 dark:text-gray-400 border-b dark:border-gray-700">
                     <th className="pb-3 px-2">Title</th>
                     <th className="pb-3 px-2">Priority</th>
                     <th className="pb-3 px-2">Assigned To</th>
-                    <th className="pb-3 px-2">Due Date</th> {/* Added Due Date column */}
+                    <th className="pb-3 px-2">Due Date</th>
                     <th className="pb-3 px-2">Status</th>
                     <th className="pb-3 px-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {tasks.map((task) => (
-                    <tr key={task.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"> {/* Added hover effect */}
-                      <td className="py-3 px-2 dark:text-gray-200">{task.title}</td>
-                      <td className="px-2">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ // Adjusted padding
-                          task.priority === "High"
-                            ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                            : task.priority === "Medium"
-                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                  {/* Use filteredTasks here */}
+                  {filteredTasks.length > 0 ? (
+                    filteredTasks.map((task) => (
+                      <tr key={task.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="py-3 px-2 dark:text-gray-200">{task.title}</td>
+                        <td className="px-2">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            task.priority === "High" ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                            : task.priority === "Medium" ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                             : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                        }`}>
-                          {task.priority}
-                        </span>
-                      </td>
-                      <td className="py-3 px-2 dark:text-gray-200">{task.assignedTo}</td>
-                      <td className="py-3 px-2 dark:text-gray-200">{task.dueDate}</td> {/* Display Due Date */}
-                      <td className="px-2">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${ // Adjusted padding
-                          task.status === "In Progress"
-                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                            : task.status === "Pending"
-                            ? "bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200" // Adjusted Pending style
-                            : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" // Added Completed style
-                        }`}>
-                          {task.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-2">
-                        <div className="flex space-x-2">
-                          {/* Add onClick handlers for actions later */}
-                          <button 
-                          className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-1"
-                          onClick={() => setIsModalOpen(true)}
-                          > {/* Added padding */}
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button 
-                          className="text-gray-400 hover:text-green-600 dark:hover:text-green-400 p-1"
-                           onClick={() => setIsModalOpen(true)}
-                           > {/* Added padding */}
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1"> {/* Added padding */}
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                          }`}>
+                            {task.priority}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2 dark:text-gray-200">{task.assignedTo}</td>
+                        <td className="py-3 px-2 dark:text-gray-200">{task.dueDate}</td>
+                        <td className="px-2">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            task.status === "In Progress" ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                            : task.status === "Pending" ? "bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200"
+                            : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          }`}>
+                            {task.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-2">
+                          <div className="flex space-x-2">
+                            <button
+                            className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-1"
+                            onClick={() => handleViewClick(task)} // Call handleViewClick
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                            className="text-gray-400 hover:text-green-600 dark:hover:text-green-400 p-1"
+                            onClick={() => handleEditClick(task)} // Call handleEditClick
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                            className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1"
+                            onClick={() => handleDeleteClick(task.id)} // Call handleDeleteClick
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    // Display a message when no tasks match the filter
+                    <tr>
+                      <td colSpan={6} className="text-center py-4 text-gray-500 dark:text-gray-400">
+                        No tasks found for the selected filter.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -300,7 +395,7 @@ export function TaskManagement() {
         </div>
 
       {/* --- Create Task Modal --- */}
-      {isModalOpen && (
+      {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center"> {/* Changed z-50 to z-[1000] */}
           <Card className="w-full max-w-md dark:bg-gray-800"> {/* Added animation classes */}
             {/* Modal Header */}
@@ -309,7 +404,7 @@ export function TaskManagement() {
               <Button
                 icon={X}
                 variant="light" // Light variant for less emphasis
-                onClick={() => setIsModalOpen(false)}
+                onClick={closeModal}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white p-1 -mr-2" // Adjusted styling
               />
             </div>
@@ -449,7 +544,7 @@ export function TaskManagement() {
                 <Button
                   type="button" // Important: type="button" to prevent form submission
                   variant="secondary" // Use secondary style for cancel
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={closeModal}
                   className="dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg">
                   Cancel
                 </Button>
@@ -466,6 +561,66 @@ export function TaskManagement() {
       )}
       {/* --- End of Modal --- */}
 
+      {/* --- View Task Modal --- */}
+      {isViewModalOpen && selectedTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg dark:bg-gray-800">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center mb-6 pb-3 border-b dark:border-gray-700">
+              <h2 className="text-xl font-semibold dark:text-white">Task Details</h2>
+              <Button icon={X} variant="light" onClick={closeModal} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white p-1 -mr-2" />
+            </div>
+            {/* Modal Content - Display Only */}
+            <div className="space-y-4">
+              {/* Use simple divs or paragraphs to display data */}
+              <div>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Title</label>
+                <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.title}</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Priority</label>
+                  <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.priority}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Status</label>
+                  <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.status}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Assigned To</label>
+                   <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.assignedTo}</p>
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Due Date</label>
+                   <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.dueDate}</p>
+                 </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Latitude</label>
+                   <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.location[0]}</p>
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Longitude</label>
+                   <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.location[1]}</p>
+                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Description</label>
+                <p className="mt-1 text-gray-900 dark:text-white whitespace-pre-wrap">{selectedTask.description || 'N/A'}</p> {/* Handle empty description */}
+              </div>
+              {/* Action Buttons */}
+              <div className="flex justify-end pt-4 mt-4 border-t dark:border-gray-700">
+                <Button variant="secondary" onClick={closeModal} className="dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg">Close</Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+      {/* --- End of View Task Modal --- */}
+
     </div>
   );
 }
@@ -478,26 +633,3 @@ export default function TaskManagementWithErrorBoundary() {
     </ErrorBoundary>
   );
 }
-
-// --- CSS animation example removed or re-typed ---
-// You can either delete the comment block below entirely
-// or re-type it carefully if you need to keep it.
-
-/*
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-fade-in-scale {
-  animation: fadeInScale 0.2s ease-out forwards;
-}
-*/
-
-// Ensure there are no characters after the final closing */ if you keep the comment.
