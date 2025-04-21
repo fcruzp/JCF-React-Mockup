@@ -2,7 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Eye, Edit2, Trash2, Plus, X } from 'lucide-react'; // Removed Filter
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react"; // Import useEffect
 import { Button, Card, TextInput, Select, SelectItem, Textarea } from '@tremor/react';
 
 interface ErrorBoundaryState {
@@ -67,6 +67,7 @@ type TaskFilter = 'All' | 'Pending' | 'In Progress' | 'Completed';
 export function TaskManagement() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // Renamed for clarity
   const [isViewModalOpen, setIsViewModalOpen] = useState(false); // State for view modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State for edit modal
   const [selectedTask, setSelectedTask] = useState<Task | null>(null); // State for the task being viewed/edited
   const [tasks, setTasks] = useState<Task[]>([
     {
@@ -133,9 +134,21 @@ export function TaskManagement() {
     status: 'Pending', // Default status for new tasks
   });
 
+  const [editingTaskData, setEditingTaskData] = useState<Partial<Task>>({}); // State for data in edit form
   const [currentFilter, setCurrentFilter] = useState<TaskFilter>('All'); // State for the active filter
 
-  // --- Input Handlers ---
+  // Effect to update editingTaskData when selectedTask changes for the edit modal
+  useEffect(() => {
+    if (selectedTask && isEditModalOpen) {
+      // Pre-fill editingTaskData with the selected task's details
+      setEditingTaskData({ ...selectedTask });
+    } else {
+      // Clear editingTaskData if no task is selected or the edit modal is closed
+      setEditingTaskData({});
+    }
+  }, [selectedTask, isEditModalOpen]);
+
+  // --- Input Handlers for Create Form ---
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setNewTask(prev => ({ ...prev, [name]: value }));
@@ -175,7 +188,32 @@ export function TaskManagement() {
     }
   };
 
-  // --- Form Submission ---
+  // --- Input Handlers for Edit Form ---
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditingTaskData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditSelectChange = (name: keyof Task, value: string) => {
+     if (name === 'priority') {
+        setEditingTaskData(prev => ({ ...prev, [name]: value as 'Low' | 'Medium' | 'High'}));
+    } else if (name === 'status') {
+        setEditingTaskData(prev => ({ ...prev, [name]: value as 'Pending' | 'In Progress' | 'Completed'}));
+    } else {
+        setEditingTaskData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleEditLocationChange = (coord: 'lat' | 'lon', value: string) => {
+    const numValue = parseFloat(value);
+    const currentLoc = editingTaskData.location || [0, 0];
+    const newLocation: [number, number] = coord === 'lat'
+      ? [isNaN(numValue) ? NaN : numValue, currentLoc[1]]
+      : [currentLoc[0], isNaN(numValue) ? NaN : numValue];
+    setEditingTaskData(prev => ({ ...prev, location: newLocation }));
+  };
+
+  // --- Form Submission (Create Task) ---
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
     // Basic validation
@@ -197,17 +235,28 @@ export function TaskManagement() {
     };
 
     setTasks(prevTasks => [...prevTasks, taskToAdd]);
-    setIsCreateModalOpen(false); // Close create modal
-    // Reset form fields
-    setNewTask({
-      title: '',
-      priority: 'Medium',
-      assignedTo: '',
-      dueDate: '',
-      description: '',
-      location: [18.0179, -76.8099], // Reset to default location
-      status: 'Pending',
-    });
+    closeModal(); // Use closeModal to reset states
+  };
+
+  // --- Form Submission (Update Task) ---
+  const handleUpdateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTask) return; // Should not happen if modal is open, but good practice
+
+    // Basic validation for edit form
+    if (!editingTaskData.title || !editingTaskData.assignedTo || !editingTaskData.dueDate || !editingTaskData.location || isNaN(editingTaskData.location[0]) || isNaN(editingTaskData.location[1])) {
+      alert('Please fill in all required fields (Title, Assigned To, Due Date, valid Location).');
+      return;
+    }
+
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === selectedTask.id
+          ? { ...task, ...editingTaskData } // Merge updated data, keeping original ID
+          : task
+      )
+    );
+    closeModal(); // Use closeModal to reset states
   };
 
   // --- Filtered Tasks ---
@@ -221,28 +270,35 @@ export function TaskManagement() {
   // --- Action Handlers ---
   const handleViewClick = (task: Task) => {
     setSelectedTask(task);
+    setIsEditModalOpen(false); // Ensure edit modal is closed
     setIsViewModalOpen(true);
   };
 
   const handleEditClick = (task: Task) => {
-    // TODO: Implement edit logic - likely involves setting selectedTask
-    // and opening a modal pre-filled with task data for editing.
-    console.log('Edit task:', task.id);
-    // Example:
-    // setSelectedTask(task);
-    // setIsEditModalOpen(true); // Need an edit modal state
+    setSelectedTask(task); // Set the task to be edited
+    setIsViewModalOpen(false); // Ensure view modal is closed
+    setIsEditModalOpen(true); // Open the edit modal
+    // The useEffect hook will handle populating editingTaskData
   };
 
   const handleDeleteClick = (taskId: number | string) => {
     // Add confirmation dialog here in a real app
-    console.log('Delete task:', taskId);
-    setTasks(prev => prev.filter(t => t.id !== taskId));
+    if (window.confirm("Are you sure you want to delete this task?")) {
+        console.log('Delete task:', taskId);
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+    }
   };
 
   const closeModal = () => {
     setIsCreateModalOpen(false);
     setIsViewModalOpen(false);
-    setSelectedTask(null); // Clear selected task when closing any modal
+    setIsEditModalOpen(false); // Close edit modal as well
+    setSelectedTask(null);
+    setNewTask({ // Reset create form state
+      title: '', priority: 'Medium', assignedTo: '', dueDate: '',
+      description: '', location: [18.0179, -76.8099], status: 'Pending',
+    });
+    setEditingTaskData({}); // Reset edit form state
   };
 
   return (
@@ -620,6 +676,165 @@ export function TaskManagement() {
         </div>
       )}
       {/* --- End of View Task Modal --- */}
+
+      {/* --- Edit Task Modal --- */}
+      {isEditModalOpen && selectedTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg dark:bg-gray-800">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center mb-6 pb-3 border-b dark:border-gray-700">
+              <h2 className="text-xl font-semibold dark:text-white">Edit Task</h2>
+              <Button icon={X} variant="light" onClick={closeModal} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white p-1 -mr-2" />
+            </div>
+            {/* Modal Form */}
+            <form onSubmit={handleUpdateTask} className="space-y-4">
+              {/* Title */}
+              <div>
+                <label htmlFor="edit-title" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <TextInput
+                  id="edit-title"
+                  name="title"
+                  value={editingTaskData.title ?? ''}
+                  onChange={handleEditInputChange}
+                  required
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                />
+              </div>
+              {/* Priority */}
+              <div>
+                <label htmlFor="edit-priority" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                  Priority <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  id="edit-priority"
+                  name="priority"
+                  value={editingTaskData.priority ?? 'Medium'}
+                  onValueChange={(value) => handleEditSelectChange('priority', value)}
+                  required
+                  className="dark:[&>button]:bg-gray-700 dark:[&>button]:border-gray-600 dark:[&>button]:text-white"
+                >
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                </Select>
+              </div>
+               {/* Status */}
+              <div>
+                <label htmlFor="edit-status" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                  Status <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  id="edit-status"
+                  name="status"
+                  value={editingTaskData.status ?? 'Pending'}
+                  onValueChange={(value) => handleEditSelectChange('status', value)}
+                  required
+                  className="dark:[&>button]:bg-gray-700 dark:[&>button]:border-gray-600 dark:[&>button]:text-white"
+                >
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                </Select>
+              </div>
+              {/* Assigned To */}
+              <div>
+                <label htmlFor="edit-assignedTo" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                  Assigned To <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  id="edit-assignedTo"
+                  name="assignedTo"
+                  value={editingTaskData.assignedTo ?? ''}
+                  onValueChange={(value) => handleEditSelectChange('assignedTo', value)}
+                  required
+                  className="dark:[&>button]:bg-gray-700 dark:[&>button]:border-gray-600 dark:[&>button]:text-white"
+                >
+                  <SelectItem value="">Select Officer</SelectItem>
+                  {officers.map((officer) => (
+                    <SelectItem key={officer} value={officer}>
+                      {officer}
+                    </SelectItem>
+                  ))}
+                   <SelectItem key="Unassigned" value="Unassigned">Unassigned</SelectItem>
+                </Select>
+              </div>
+              {/* Due Date */}
+              <div>
+                <label htmlFor="edit-dueDate" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                  Due Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="edit-dueDate"
+                  name="dueDate"
+                  type="date"
+                  value={editingTaskData.dueDate ?? ''}
+                  onChange={handleEditInputChange}
+                  required
+                  className="block w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 dark:focus:ring-indigo-400 dark:[color-scheme:dark]"
+                />
+              </div>
+              {/* Location */}
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div>
+                   <label htmlFor="edit-latitude" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                     Latitude <span className="text-red-500">*</span>
+                   </label>
+                   <TextInput
+                     id="edit-latitude"
+                     name="latitude"
+                     type="number"
+                     step="any"
+                     value={editingTaskData.location?.[0] !== undefined ? String(editingTaskData.location[0]) : ''}
+                     onChange={(e) => handleEditLocationChange('lat', e.target.value)}
+                     placeholder="e.g., 18.0179"
+                     required
+                     className="dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                   />
+                 </div>
+                 <div>
+                   <label htmlFor="edit-longitude" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                     Longitude <span className="text-red-500">*</span>
+                   </label>
+                   <TextInput
+                     id="edit-longitude"
+                     name="longitude"
+                     type="number"
+                     step="any"
+                     value={editingTaskData.location?.[1] !== undefined ? String(editingTaskData.location[1]) : ''}
+                     onChange={(e) => handleEditLocationChange('lon', e.target.value)}
+                     placeholder="e.g., -76.8099"
+                     required
+                     className="dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                   />
+                 </div>
+               </div>
+              {/* Description */}
+              <div>
+                <label htmlFor="edit-description" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                  Description
+                </label>
+                <Textarea
+                  id="edit-description"
+                  name="description"
+                  value={editingTaskData.description ?? ''}
+                  onChange={handleEditInputChange}
+                  rows={3}
+                  placeholder="Add any relevant details..."
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                />
+              </div>
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 mt-4 border-t dark:border-gray-700">
+                <Button type="button" variant="secondary" onClick={closeModal} className="dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg">Cancel</Button>
+                <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg">Update Task</Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+      {/* --- End of Edit Task Modal --- */}
 
     </div>
   );
