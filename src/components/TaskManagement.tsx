@@ -1,8 +1,8 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Eye, Edit2, Trash2, Plus, X } from 'lucide-react'; // Removed Filter
+import { Eye, Edit2, Trash2, Plus, X, AlertTriangle } from 'lucide-react'; // Import AlertTriangle
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import React, { useState, useMemo, useEffect } from "react"; // Import useEffect
+import React, { useState, useMemo, useEffect } from "react";
 import { Button, Card, TextInput, Select, SelectItem, Textarea } from '@tremor/react';
 
 interface ErrorBoundaryState {
@@ -68,6 +68,8 @@ export function TaskManagement() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // Renamed for clarity
   const [isViewModalOpen, setIsViewModalOpen] = useState(false); // State for view modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State for edit modal
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false); // State for confirmation modal
+  const [taskToDeleteId, setTaskToDeleteId] = useState<number | string | null>(null); // State for ID of task to delete
   const [selectedTask, setSelectedTask] = useState<Task | null>(null); // State for the task being viewed/edited
   const [tasks, setTasks] = useState<Task[]>([
     {
@@ -271,41 +273,63 @@ export function TaskManagement() {
   const handleViewClick = (task: Task) => {
     setSelectedTask(task);
     setIsEditModalOpen(false); // Ensure edit modal is closed
+    setIsConfirmModalOpen(false); // Ensure confirm modal is closed
     setIsViewModalOpen(true);
   };
 
   const handleEditClick = (task: Task) => {
     setSelectedTask(task); // Set the task to be edited
     setIsViewModalOpen(false); // Ensure view modal is closed
+    setIsConfirmModalOpen(false); // Ensure confirm modal is closed
     setIsEditModalOpen(true); // Open the edit modal
     // The useEffect hook will handle populating editingTaskData
   };
 
+  // Opens the confirmation modal
   const handleDeleteClick = (taskId: number | string) => {
-    // Add confirmation dialog here in a real app
-    if (window.confirm("Are you sure you want to delete this task?")) {
-        console.log('Delete task:', taskId);
-        setTasks(prev => prev.filter(t => t.id !== taskId));
+    setTaskToDeleteId(taskId); // Store the ID of the task to potentially delete
+    setIsConfirmModalOpen(true); // Open the confirmation modal
+  };
+
+  // Performs the actual deletion
+  const handleConfirmDelete = () => {
+    if (taskToDeleteId !== null) {
+      console.log('Deleting task:', taskToDeleteId);
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskToDeleteId));
+      // Close other modals if the deleted task was the selected one
+      if (selectedTask && selectedTask.id === taskToDeleteId) {
+          setSelectedTask(null);
+          setIsViewModalOpen(false);
+          setIsEditModalOpen(false);
+      }
     }
+    closeConfirmModal(); // Close the confirmation modal
+  };
+
+  // Closes the confirmation modal without deleting
+  const closeConfirmModal = () => {
+    setIsConfirmModalOpen(false);
+    setTaskToDeleteId(null);
   };
 
   const closeModal = () => {
     setIsCreateModalOpen(false);
     setIsViewModalOpen(false);
     setIsEditModalOpen(false); // Close edit modal as well
+    setIsConfirmModalOpen(false); // Also close confirm modal if open
     setSelectedTask(null);
     setNewTask({ // Reset create form state
       title: '', priority: 'Medium', assignedTo: '', dueDate: '',
       description: '', location: [18.0179, -76.8099], status: 'Pending',
     });
     setEditingTaskData({}); // Reset edit form state
+    setTaskToDeleteId(null); // Reset task to delete ID
   };
 
   return (
     <div className="p-6">
         {/* Header with Create Button */}
         <div className="flex justify-between items-center mb-6">
-            {/* <h1 className="text-2xl font-semibold dark:text-white">Task Management</h1> */}
             <Button
               icon={Plus}
               onClick={() => setIsCreateModalOpen(true)} // Open create modal
@@ -426,6 +450,7 @@ export function TaskManagement() {
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
+                            {/* Delete Button now calls the updated handleDeleteClick */}
                             <button
                             className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1"
                             onClick={() => handleDeleteClick(task.id)} // Call handleDeleteClick
@@ -601,7 +626,7 @@ export function TaskManagement() {
                   type="button" // Important: type="button" to prevent form submission
                   variant="secondary" // Use secondary style for cancel
                   onClick={closeModal}
-                  className="dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg">
+                  className="dark:text-white dark:border-gray-600 hover:bg-gray-700 rounded-lg">
                   Cancel
                 </Button>
                 <Button
@@ -699,7 +724,7 @@ export function TaskManagement() {
                   value={editingTaskData.title ?? ''}
                   onChange={handleEditInputChange}
                   required
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-black focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
               {/* Priority */}
@@ -827,7 +852,7 @@ export function TaskManagement() {
               </div>
               {/* Action Buttons */}
               <div className="flex justify-end space-x-3 pt-4 mt-4 border-t dark:border-gray-700">
-                <Button type="button" variant="secondary" onClick={closeModal} className="text-white dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg">Cancel</Button>
+                <Button type="button" variant="secondary" onClick={closeModal} className="text-white dark:border-gray-600 hover:bg-gray-700 rounded-lg">Cancel</Button>
                 <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg">Update Task</Button>
               </div>
             </form>
@@ -835,6 +860,37 @@ export function TaskManagement() {
         </div>
       )}
       {/* --- End of Edit Task Modal --- */}
+
+      {/* --- Confirmation Modal --- */}
+      {isConfirmModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[1050] flex items-center justify-center p-4"> {/* Higher z-index */}
+          <Card className="w-full max-w-sm bg-gray-100 dark:bg-gray-800">
+            <div className="flex flex-col items-center text-center">
+              <AlertTriangle className="w-12 h-12 text-red-500 dark:text-red-400 mb-4" />
+              <h2 className="text-lg font-semibold mb-2 dark:text-white">Confirm Deletion</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                Are you sure you want to delete this task? This action cannot be undone.
+              </p>
+              <div className="flex justify-center space-x-4 w-full">
+                <Button
+                  variant="secondary"
+                  onClick={closeConfirmModal} // Use specific closer
+                  className="flex-1 dark:text-white dark:border-gray-600 hover:bg-gray-500 rounded-lg"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmDelete}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white dark:bg-red-500 dark:hover:bg-red-600 rounded-lg"
+                >
+                  Delete Task
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+      {/* --- End of Confirmation Modal --- */}
 
     </div>
   );
