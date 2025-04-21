@@ -453,10 +453,10 @@ export function TaskManagement() {
       {/* --- Create Task Modal --- */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center"> {/* Changed z-50 to z-[1000] */}
-          <Card className="w-full max-w-md dark:bg-gray-800"> {/* Added animation classes */}
+          <Card className="w-full max-w-md bg-gray-500 dark:bg-gray-800"> {/* Added animation classes */}
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-6"> {/* Added border */}
-              <h2 className="text-xl font-semibold dark:text-white">Create New Task</h2>
+              <h2 className="text-xl font-semibold text-white">Create New Task</h2>
               <Button
                 icon={X}
                 variant="light" // Light variant for less emphasis
@@ -469,7 +469,7 @@ export function TaskManagement() {
             <form onSubmit={handleCreateTask} className="space-y-4">
               {/* Title */}
               <div>
-                <label htmlFor="title" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="title" className="block text-sm font-medium mb-1 text-gray-300">
                   Title <span className="text-red-500">*</span>
                 </label>
                 <TextInput
@@ -485,7 +485,7 @@ export function TaskManagement() {
 
               {/* Priority */}
               <div>
-                <label htmlFor="priority" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="priority" className="block text-sm font-medium mb-1 text-gray-300">
                   Priority <span className="text-red-500">*</span>
                 </label>
                 <Select
@@ -505,7 +505,7 @@ export function TaskManagement() {
 
               {/* Assigned To */}
               <div>
-                <label htmlFor="assignedTo" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="assignedTo" className="block text-sm font-medium mb-1 text-gray-300">
                   Assigned To <span className="text-red-500">*</span>
                 </label>
                 <Select
@@ -529,7 +529,7 @@ export function TaskManagement() {
 
               {/* Due Date */}
               <div>
-                <label htmlFor="dueDate" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="dueDate" className="block text-sm font-medium mb-1 text-gray-300">
                   Due Date <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -546,7 +546,7 @@ export function TaskManagement() {
               {/* Location */}
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> {/* Responsive grid */}
                  <div>
-                   <label htmlFor="latitude" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                   <label htmlFor="latitude" className="block text-sm font-medium mb-1 text-gray-300">
                      Latitude <span className="text-red-500">*</span>
                    </label>
                    <TextInput
@@ -562,7 +562,7 @@ export function TaskManagement() {
                    />
                  </div>
                  <div>
-                   <label htmlFor="longitude" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                   <label htmlFor="longitude" className="block text-sm font-medium mb-1 text-gray-300">
                      Longitude <span className="text-red-500">*</span>
                    </label>
                    <TextInput
@@ -581,7 +581,7 @@ export function TaskManagement() {
 
               {/* Description */}
               <div>
-                <label htmlFor="description" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="description" className="block text-sm font-medium mb-1 text-gray-300">
                   Description
                 </label>
                 <Textarea
@@ -620,56 +620,56 @@ export function TaskManagement() {
       {/* --- View Task Modal --- */}
       {isViewModalOpen && selectedTask && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center p-4">
-          <Card className="w-full max-w-lg dark:bg-gray-800">
+          <Card className="w-full max-w-lg  bg-gray-500 dark:bg-gray-800">
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-6 pb-3 border-b dark:border-gray-700">
-              <h2 className="text-xl font-semibold dark:text-white">Task Details</h2>
+              <h2 className="text-xl font-semibold text-white">Task Details</h2>
               <Button icon={X} variant="light" onClick={closeModal} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white p-1 -mr-2" />
             </div>
             {/* Modal Content - Display Only */}
             <div className="space-y-4">
               {/* Use simple divs or paragraphs to display data */}
               <div>
-                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Title</label>
+                <label className="block text-sm font-medium text-white dark:text-gray-400">Title</label>
                 <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.title}</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Priority</label>
+                  <label className="block text-sm font-medium text-white dark:text-gray-400">Priority</label>
                   <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.priority}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Status</label>
+                  <label className="block text-sm font-medium text-white dark:text-gray-400">Status</label>
                   <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.status}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <div>
-                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Assigned To</label>
+                   <label className="block text-sm font-medium text-white dark:text-gray-400">Assigned To</label>
                    <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.assignedTo}</p>
                  </div>
                  <div>
-                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Due Date</label>
+                   <label className="block text-sm font-medium text-white dark:text-gray-400">Due Date</label>
                    <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.dueDate}</p>
                  </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <div>
-                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Latitude</label>
+                   <label className="block text-sm font-medium text-white dark:text-gray-400">Latitude</label>
                    <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.location[0]}</p>
                  </div>
                  <div>
-                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Longitude</label>
+                   <label className="block text-sm font-medium text-white dark:text-gray-400">Longitude</label>
                    <p className="mt-1 text-gray-900 dark:text-white">{selectedTask.location[1]}</p>
                  </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">Description</label>
+                <label className="block text-sm font-medium text-white dark:text-gray-400">Description</label>
                 <p className="mt-1 text-gray-900 dark:text-white whitespace-pre-wrap">{selectedTask.description || 'N/A'}</p> {/* Handle empty description */}
               </div>
               {/* Action Buttons */}
               <div className="flex justify-end pt-4 mt-4 border-t dark:border-gray-700">
-                <Button variant="secondary" onClick={closeModal} className="dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg">Close</Button>
+                <Button variant="secondary" onClick={closeModal} className="text-white dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg">Close</Button>
               </div>
             </div>
           </Card>
@@ -680,17 +680,17 @@ export function TaskManagement() {
       {/* --- Edit Task Modal --- */}
       {isEditModalOpen && selectedTask && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center p-4">
-          <Card className="w-full max-w-lg dark:bg-gray-800">
+          <Card className="w-full max-w-lg bg-gray-500 dark:bg-gray-800">
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-6 pb-3 border-b dark:border-gray-700">
-              <h2 className="text-xl font-semibold dark:text-white">Edit Task</h2>
+              <h2 className="text-xl font-semibold text-white">Edit Task</h2>
               <Button icon={X} variant="light" onClick={closeModal} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white p-1 -mr-2" />
             </div>
             {/* Modal Form */}
             <form onSubmit={handleUpdateTask} className="space-y-4">
               {/* Title */}
               <div>
-                <label htmlFor="edit-title" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="edit-title" className="block text-sm font-medium mb-1 text-gray-300">
                   Title <span className="text-red-500">*</span>
                 </label>
                 <TextInput
@@ -704,7 +704,7 @@ export function TaskManagement() {
               </div>
               {/* Priority */}
               <div>
-                <label htmlFor="edit-priority" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="edit-priority" className="block text-sm font-medium mb-1 text-gray-300">
                   Priority <span className="text-red-500">*</span>
                 </label>
                 <Select
@@ -722,7 +722,7 @@ export function TaskManagement() {
               </div>
                {/* Status */}
               <div>
-                <label htmlFor="edit-status" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="edit-status" className="block text-sm font-medium mb-1 text-gray-300">
                   Status <span className="text-red-500">*</span>
                 </label>
                 <Select
@@ -740,7 +740,7 @@ export function TaskManagement() {
               </div>
               {/* Assigned To */}
               <div>
-                <label htmlFor="edit-assignedTo" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="edit-assignedTo" className="block text-sm font-medium mb-1 text-gray-300">
                   Assigned To <span className="text-red-500">*</span>
                 </label>
                 <Select
@@ -762,7 +762,7 @@ export function TaskManagement() {
               </div>
               {/* Due Date */}
               <div>
-                <label htmlFor="edit-dueDate" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="edit-dueDate" className="block text-sm font-medium mb-1 text-gray-300">
                   Due Date <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -778,7 +778,7 @@ export function TaskManagement() {
               {/* Location */}
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <div>
-                   <label htmlFor="edit-latitude" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                   <label htmlFor="edit-latitude" className="block text-sm font-medium mb-1 text-gray-300">
                      Latitude <span className="text-red-500">*</span>
                    </label>
                    <TextInput
@@ -794,7 +794,7 @@ export function TaskManagement() {
                    />
                  </div>
                  <div>
-                   <label htmlFor="edit-longitude" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                   <label htmlFor="edit-longitude" className="block text-sm font-medium mb-1 text-gray-300">
                      Longitude <span className="text-red-500">*</span>
                    </label>
                    <TextInput
@@ -812,7 +812,7 @@ export function TaskManagement() {
                </div>
               {/* Description */}
               <div>
-                <label htmlFor="edit-description" className="block text-sm font-medium mb-1 dark:text-gray-300">
+                <label htmlFor="edit-description" className="block text-sm font-medium mb-1 text-gray-300">
                   Description
                 </label>
                 <Textarea
@@ -827,7 +827,7 @@ export function TaskManagement() {
               </div>
               {/* Action Buttons */}
               <div className="flex justify-end space-x-3 pt-4 mt-4 border-t dark:border-gray-700">
-                <Button type="button" variant="secondary" onClick={closeModal} className="dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg">Cancel</Button>
+                <Button type="button" variant="secondary" onClick={closeModal} className="text-white dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg">Cancel</Button>
                 <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg">Update Task</Button>
               </div>
             </form>
