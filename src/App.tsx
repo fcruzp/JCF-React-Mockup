@@ -8,6 +8,7 @@ import { Bell, User } from 'lucide-react';
 import TaskManagement from './components/TaskManagement';
 import UserProfile from './components/user-profile/UserProfile'; // Import UserProfile
 
+
 function App() {
   const [activeView, setActiveView] = useState('Dashboard');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);

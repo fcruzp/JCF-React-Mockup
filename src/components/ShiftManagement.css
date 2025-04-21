@@ -1,0 +1,131 @@
+/* General Calendar Styling */
+.rbc-calendar {
+  background-color: #ffffff; /* Light mode background */
+  color: #1f2937; /* Light mode text */
+}
+
+.dark .rbc-calendar {
+  background-color: #1f2937; /* Dark mode background */
+  color: #d1d5db; /* Dark mode text */
+}
+
+/* Header Styling */
+.rbc-toolbar {
+  background-color: #f3f4f6; /* Light mode toolbar background */
+  color: #1f2937; /* Light mode toolbar text */
+  border-bottom: 1px solid #e5e7eb; /* Light mode border */
+}
+
+.dark .rbc-toolbar {
+  background-color: #374151; /* Dark mode toolbar background */
+  color: #d1d5db; /* Dark mode toolbar text */
+  border-bottom: 1px solid #4b5563; /* Dark mode border */
+}
+
+.rbc-toolbar button {
+  background-color: #e5e7eb; /* Light mode button background */
+  color: #1f2937; /* Light mode button text */
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.dark .rbc-toolbar button {
+  background-color: #4b5563; /* Dark mode button background */
+  color: #d1d5db; /* Dark mode button text */
+}
+
+.rbc-toolbar button:hover {
+  background-color: #d1d5db; /* Light mode hover */
+}
+
+.dark .rbc-toolbar button:hover {
+  background-color: #6b7280; /* Dark mode hover */
+}
+
+/* Day and Time Grid Styling */
+.rbc-time-view,
+.rbc-month-view {
+  background-color: #ffffff; /* Light mode background */
+}
+
+.dark .rbc-time-view,
+.dark .rbc-month-view {
+  background-color: #1f2937; /* Dark mode background */
+}
+
+.rbc-day-bg {
+  background-color: #ffffff; /* Light mode day cells */
+}
+
+.dark .rbc-day-bg {
+  background-color: #1f2937; /* Dark mode day cells */
+}
+
+.rbc-day-bg:hover {
+  background-color: #f3f4f6; /* Light mode hover */
+}
+
+.dark .rbc-day-bg:hover {
+  background-color: #374151; /* Dark mode hover */
+}
+
+.rbc-today {
+  background-color: #e5e7eb !important; /* Light mode today highlight */
+}
+
+.dark .rbc-today {
+  background-color: #374151 !important; /* Dark mode today highlight */
+}
+
+.rbc-event {
+  background-color: #2563eb; /* Event background */
+  color: #ffffff; /* Event text */
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.rbc-event:hover {
+  background-color: #1d4ed8; /* Hover effect for events */
+}
+
+/* Time Slot Styling */
+.rbc-timeslot-group {
+  border-color: #e5e7eb; /* Light mode border */
+}
+
+.dark .rbc-timeslot-group {
+  border-color: #4b5563; /* Dark mode border */
+}
+
+.rbc-time-header {
+  background-color: #f3f4f6; /* Light mode header background */
+  color: #1f2937; /* Light mode header text */
+}
+
+.dark .rbc-time-header {
+  background-color: #374151; /* Dark mode header background */
+  color: #d1d5db; /* Dark mode header text */
+}
+
+.rbc-time-header-cell {
+  border-color: #e5e7eb; /* Light mode border */
+}
+
+.dark .rbc-time-header-cell {
+  border-color: #4b5563; /* Dark mode border */
+}
+
+/* Week and Month View Styling */
+.rbc-header {
+  background-color: #f3f4f6; /* Light mode header background */
+  color: #1f2937; /* Light mode header text */
+  border-color: #e5e7eb; /* Light mode border */
+}
+
+.dark .rbc-header {
+  background-color: #374151; /* Dark mode header background */
+  color: #d1d5db; /* Dark mode header text */
+  border-color: #4b5563; /* Dark mode border */
+}

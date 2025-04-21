@@ -1,45 +1,32 @@
-import { BarChart, Card } from '@tremor/react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, ResponsiveContainer } from 'recharts';
 
-const data = [
-  {
-    name: 'Monday',
-    'Completed Tasks': 12,
-    'Pending Tasks': 4,
-  },
-  {
-    name: 'Tuesday',
-    'Completed Tasks': 18,
-    'Pending Tasks': 5,
-  },
-  {
-    name: 'Wednesday',
-    'Completed Tasks': 15,
-    'Pending Tasks': 3,
-  },
-  {
-    name: 'Thursday',
-    'Completed Tasks': 20,
-    'Pending Tasks': 8,
-  },
-  {
-    name: 'Friday',
-    'Completed Tasks': 16,
-    'Pending Tasks': 6,
-  },
+const chartData = [
+  { name: 'Monday', completed: 12, pending: 4 },
+  { name: 'Tuesday', completed: 18, pending: 5 },
+  { name: 'Wednesday', completed: 15, pending: 3 },
+  { name: 'Thursday', completed: 20, pending: 8 },
+  { name: 'Friday', completed: 16, pending: 6 },
+  { name: 'Saturday', completed: 8, pending: 2 },
+  { name: 'Sunday', completed: 5, pending: 1 },
 ];
 
 export default function TasksChart() {
   return (
-    <Card className="mt-4 dark:bg-gray-800">
-      <h3 className="text-lg font-medium mb-4 dark:text-white">Weekly Task Distribution</h3>
-      <BarChart
-        data={data}
-        index="name"
-        categories={['Completed Tasks', 'Pending Tasks']}
-        colors={['emerald', 'red']}
-        yAxisWidth={48}
-        className="dark:text-gray-200"
-      />
-    </Card>
+    <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+      <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+        Weekly Task Distribution
+      </h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="completed" fill="#10B981" name="Completed Tasks" />
+          <Bar dataKey="pending" fill="#F43F5E" name="Pending Tasks" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

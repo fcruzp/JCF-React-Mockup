@@ -1,16 +1,28 @@
 import { useState } from 'react';
-import { Button, Card, TextInput, Select, SelectItem } from '@tremor/react';
-import { format, startOfWeek, addDays} from 'date-fns';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { enUS } from 'date-fns/locale/en-US';
+import { Button, Card, Select, SelectItem } from '@tremor/react';
 import { Plus, X } from 'lucide-react';
+import './ShiftManagement.css';
 
 interface Shift {
   id: string;
-  officer: string;
-  date: string;
-  startTime: string;
-  endTime: string;
+  title: string;
+  start: Date;
+  end: Date;
   type: 'morning' | 'afternoon' | 'night';
 }
+
+const locales = { 'en-US': enUS };
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  locales,
+});
 
 const officers = [
   'Robert Brown',
@@ -20,92 +32,125 @@ const officers = [
 ];
 
 const shiftTypes = [
-  { value: 'morning', label: 'Morning (6:00 AM - 2:00 PM)' },
-  { value: 'afternoon', label: 'Afternoon (2:00 PM - 10:00 PM)' },
-  { value: 'night', label: 'Night (10:00 PM - 6:00 AM)' },
+  { value: 'morning', label: 'Morning (6:00 AM - 2:00 PM)', start: '06:00', end: '14:00' },
+  { value: 'afternoon', label: 'Afternoon (2:00 PM - 10:00 PM)', start: '14:00', end: '22:00' },
+  { value: 'night', label: 'Night (10:00 PM - 6:00 AM)', start: '22:00', end: '06:00' },
 ];
 
-const initialShifts: Shift[] = [
+const sampleShifts: Shift[] = [
   {
     id: '1',
-    officer: 'Robert Brown',
-    date: '2024-03-18',
-    startTime: '06:00',
-    endTime: '14:00',
+    title: 'Morning Shift - Robert Brown',
+    start: new Date(2025, 3, 1, 6, 0), // April 1, 2025, 6:00 AM
+    end: new Date(2025, 3, 1, 14, 0), // April 1, 2025, 2:00 PM
     type: 'morning',
   },
   {
     id: '2',
-    officer: 'Sarah Williams',
-    date: '2024-03-18',
-    startTime: '14:00',
-    endTime: '22:00',
+    title: 'Afternoon Shift - Sarah Williams',
+    start: new Date(2025, 3, 1, 14, 0), // April 1, 2025, 2:00 PM
+    end: new Date(2025, 3, 1, 22, 0), // April 1, 2025, 10:00 PM
     type: 'afternoon',
+  },
+  {
+    id: '3',
+    title: 'Night Shift - James Davis',
+    start: new Date(2025, 3, 1, 22, 0), // April 1, 2025, 10:00 PM
+    end: new Date(2025, 3, 2, 6, 0), // April 2, 2025, 6:00 AM
+    type: 'night',
+  },
+  {
+    id: '4',
+    title: 'Morning Shift - Lisa Anderson',
+    start: new Date(2025, 3, 2, 6, 0), // April 2, 2025, 6:00 AM
+    end: new Date(2025, 3, 2, 14, 0), // April 2, 2025, 2:00 PM
+    type: 'morning',
+  },
+  {
+    id: '5',
+    title: 'Afternoon Shift - Robert Brown',
+    start: new Date(2025, 3, 2, 14, 0), // April 2, 2025, 2:00 PM
+    end: new Date(2025, 3, 2, 22, 0), // April 2, 2025, 10:00 PM
+    type: 'afternoon',
+  },
+  {
+    id: '6',
+    title: 'Night Shift - Sarah Williams',
+    start: new Date(2025, 3, 2, 22, 0), // April 2, 2025, 10:00 PM
+    end: new Date(2025, 3, 3, 6, 0), // April 3, 2025, 6:00 AM
+    type: 'night',
+  },
+  {
+    id: '7',
+    title: 'Morning Shift - James Davis',
+    start: new Date(2025, 3, 3, 6, 0), // April 3, 2025, 6:00 AM
+    end: new Date(2025, 3, 3, 14, 0), // April 3, 2025, 2:00 PM
+    type: 'morning',
+  },
+  {
+    id: '8',
+    title: 'Afternoon Shift - Lisa Anderson',
+    start: new Date(2025, 3, 3, 14, 0), // April 3, 2025, 2:00 PM
+    end: new Date(2025, 3, 3, 22, 0), // April 3, 2025, 10:00 PM
+    type: 'afternoon',
+  },
+  {
+    id: '9',
+    title: 'Night Shift - Robert Brown',
+    start: new Date(2025, 3, 3, 22, 0), // April 3, 2025, 10:00 PM
+    end: new Date(2025, 3, 4, 6, 0), // April 4, 2025, 6:00 AM
+    type: 'night',
   },
 ];
 
 export default function ShiftManagement() {
+  const [shifts, setShifts] = useState<Shift[]>(sampleShifts);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [shifts, setShifts] = useState<Shift[]>(initialShifts);
   const [newShift, setNewShift] = useState<Partial<Shift>>({
-    date: format(new Date(), 'yyyy-MM-dd'),
     type: 'morning',
   });
 
-  const startDate = startOfWeek(new Date());
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
-
   const handleCreateShift = () => {
-    if (!newShift.officer || !newShift.date || !newShift.type) return;
-
-    const shiftTimes = {
-      morning: { start: '06:00', end: '14:00' },
-      afternoon: { start: '14:00', end: '22:00' },
-      night: { start: '22:00', end: '06:00' },
-    };
-
-    const times = shiftTimes[newShift.type as keyof typeof shiftTimes];
+    if (!newShift.title || !newShift.start || !newShift.end || !newShift.type) return;
 
     const shift: Shift = {
       id: Math.random().toString(36).substr(2, 9),
-      officer: newShift.officer,
-      date: newShift.date,
-      startTime: times.start,
-      endTime: times.end,
+      title: newShift.title!,
+      start: newShift.start!,
+      end: newShift.end!,
       type: newShift.type as 'morning' | 'afternoon' | 'night',
     };
 
     setShifts([...shifts, shift]);
     setIsModalOpen(false);
+    setNewShift({ type: 'morning' });
+  };
+
+  const handleShiftTypeChange = (type: string) => {
+    const selectedType = shiftTypes.find((shiftType) => shiftType.value === type);
+    if (!selectedType) return;
+
+    const date = newShift.start || new Date();
+    const start = new Date(date);
+    const [startHour, startMinute] = selectedType.start.split(':').map(Number);
+    start.setHours(startHour, startMinute);
+
+    const end = new Date(date);
+    const [endHour, endMinute] = selectedType.end.split(':').map(Number);
+    end.setHours(endHour, endMinute);
+
     setNewShift({
-      date: format(new Date(), 'yyyy-MM-dd'),
-      type: 'morning',
+      ...newShift,
+      type: type as 'morning' | 'afternoon' | 'night',
+      start,
+      end,
     });
-  };
-
-  const getShiftsByDate = (date: Date) => {
-    return shifts.filter(
-      (shift) => shift.date === format(date, 'yyyy-MM-dd')
-    );
-  };
-
-  const getShiftColor = (type: string) => {
-    switch (type) {
-      case 'morning':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'afternoon':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'night':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
   };
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        {/* <h1 className="text-2xl font-semibold dark:text-white">Shift Management</h1> */}
         <Button
           icon={Plus}
           onClick={() => setIsModalOpen(true)}
@@ -115,30 +160,16 @@ export default function ShiftManagement() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-7 gap-4">
-        {weekDays.map((day) => (
-          <div key={day.toString()} className="min-h-[200px]">
-            <Card className="h-full dark:bg-gray-800">
-              <div className="font-semibold mb-3 dark:text-white">
-                {format(day, 'EEE, MMM d')}
-              </div>
-              <div className="space-y-2">
-                {getShiftsByDate(day).map((shift) => (
-                  <div
-                    key={shift.id}
-                    className={`p-2 rounded-md ${getShiftColor(shift.type)}`}
-                  >
-                    <div className="font-medium">{shift.officer}</div>
-                    <div className="text-sm">
-                      {shift.startTime} - {shift.endTime}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-        ))}
-      </div>
+      <Card className="p-4 bg-yellow dark:bg-gray-800">
+        <Calendar
+          localizer={localizer}
+          events={shifts}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: 500 }}
+          className="bg-white dark:bg-gray-800 dark:text-white"
+        />
+      </Card>
 
       {/* Create Shift Modal */}
       {isModalOpen && (
@@ -160,13 +191,13 @@ export default function ShiftManagement() {
                   Officer
                 </label>
                 <Select
-                  value={newShift.officer}
-                  onValueChange={(value) =>
-                    setNewShift({ ...newShift, officer: value })
+                  value={newShift.title}
+                  onChange={(e) =>
+                    setNewShift({ ...newShift, title: (e.target as HTMLSelectElement).value })
                   }
                 >
                   {officers.map((officer) => (
-                    <SelectItem key={officer} value={officer}>
+                    <SelectItem key={officer} value={`Shift - ${officer}`}>
                       {officer}
                     </SelectItem>
                   ))}
@@ -177,12 +208,14 @@ export default function ShiftManagement() {
                 <label className="block text-sm font-medium mb-1 dark:text-white">
                   Date
                 </label>
-                <TextInput
+                <input
                   type="date"
-                  value={newShift.date}
-                  onChange={(e) =>
-                    setNewShift({ ...newShift, date: e.target.value })
-                  }
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+                  value={newShift.start ? format(newShift.start, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => {
+                    const date = new Date(e.target.value);
+                    setNewShift({ ...newShift, start: date, end: date });
+                  }}
                 />
               </div>
 
@@ -192,9 +225,7 @@ export default function ShiftManagement() {
                 </label>
                 <Select
                   value={newShift.type}
-                  onValueChange={(value) =>
-                    setNewShift({ ...newShift, type: value as 'morning' | 'afternoon' | 'night' })
-                  }
+                  onChange={(e) => handleShiftTypeChange((e.target as HTMLSelectElement).value)}
                 >
                   {shiftTypes.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
